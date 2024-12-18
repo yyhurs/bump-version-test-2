@@ -1,4 +1,7 @@
-# Checklist
+# Description
+<!-- Describe the changes you have made -->
+
+## Checklist
 
 - [ ] 是否已經 rebase 最新的 `master`？
 - [ ] 是否包含 `package.json` 的版號變更？

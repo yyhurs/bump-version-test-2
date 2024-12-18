@@ -1,0 +1,43 @@
+name: Check package.json Version
+
+on:
+  pull_request:
+    types:
+      - synchronize
+      - opened
+      - reopened
+
+jobs:
+  check-package-version:
+    runs-on: ubuntu-latest
+    steps:
+      # 1. 檢查 PR 分支的代碼，確保完整的 Git 紀錄
+      - name: Checkout PR branch
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # 獲取完整的 Git 紀錄
+
+      # 2. 拉取遠端的 main 分支
+      - name: Fetch main branch
+        run: git fetch origin main
+
+      # 3. 檢查 package.json 是否被修改
+      - name: Check package.json version
+        run: |
+          # 確保 package.json 被修改
+          if ! git diff --name-only origin/main...HEAD | grep -q "package.json"; then
+            echo "❌ Error: package.json 未被修改，請確保更新版本號！"
+            exit 1
+          fi
+
+          # 提取當前 branch 和 main 的版本號
+          CURRENT_VERSION=$(jq -r '.version' package.json)
+          MAIN_VERSION=$(git show origin/main:package.json | jq -r '.version')
+
+          # 確保版本號是遞增的
+          if [ "$(printf '%s\n' "$CURRENT_VERSION" "$MAIN_VERSION" | sort -V | head -n 1)" = "$CURRENT_VERSION" ]; then
+            echo "❌ Error: 新版本號 $CURRENT_VERSION 必須大於 main 上的版本號 $MAIN_VERSION！"
+            exit 1
+          fi
+
+          echo "✅ package.json 檢查通過：版本號從 $MAIN_VERSION 升級到 $CURRENT_VERSION"
