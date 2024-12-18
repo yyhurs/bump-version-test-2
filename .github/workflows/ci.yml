@@ -1,18 +1,41 @@
-name: GitHub Actions Demo
-run-name: ${{ github.actor }} is testing out GitHub Actions 🚀
-on: [push]
+name: Check package.json Version
+
+on:
+  pull_request:
+    types:
+      - synchronize
+      - opened
+      - reopened
+
 jobs:
-  Explore-GitHub-Actions:
+  check-package-version:
     runs-on: ubuntu-latest
     steps:
-      - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
-      - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
-      - run: echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
-      - name: Check out repository code
-        uses: actions/checkout@v4
-      - run: echo "💡 The ${{ github.repository }} repository has been cloned to the runner."
-      - run: echo "🖥️ The workflow is now ready to test your code on the runner."
-      - name: List files in the repository
+      # 檢查出最新的 PR 代碼
+      - name: Checkout PR branch
+        uses: actions/checkout@v3
+
+      # 安裝 jq 工具來解析 JSON
+      - name: Install jq
+        run: sudo apt-get install jq
+
+      # 檢查 package.json 是否被修改，以及版本號是否遞增
+      - name: Check package.json version
         run: |
-          ls ${{ github.workspace }}
-      - run: echo "🍏 This job's status is ${{ job.status }}."
+          # 確保 package.json 被修改
+          if ! git diff --name-only origin/main...HEAD | grep -q "package.json"; then
+            echo "❌ Error: package.json 未被修改，請確保更新版本號！"
+            exit 1
+          fi
+
+          # 提取當前 branch 和 main 的版本號
+          CURRENT_VERSION=$(jq -r '.version' package.json)
+          MAIN_VERSION=$(git show origin/main:package.json | jq -r '.version')
+
+          # 確保版本號是遞增的
+          if [ "$(printf '%s\n' "$CURRENT_VERSION" "$MAIN_VERSION" | sort -V | head -n 1)" = "$CURRENT_VERSION" ]; then
+            echo "❌ Error: 新版本號 $CURRENT_VERSION 必須大於 main 上的版本號 $MAIN_VERSION！"
+            exit 1
+          fi
+
+          echo "✅ package.json 檢查通過：版本號從 $MAIN_VERSION 升級到 $CURRENT_VERSION"
