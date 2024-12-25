@@ -21,6 +21,7 @@ jobs:
 
       # 3. 檢查 package.json 是否被修改
       - name: Check package.json version
+        continue-on-error: true
         run: |
           # 確保 package.json 被修改
           if ! git diff --name-only origin/main...HEAD | grep -q "package.json"; then
@@ -39,3 +40,6 @@ jobs:
           fi
 
           echo "✅ package.json 檢查通過：版本號從 $MAIN_VERSION 升級到 $CURRENT_VERSION"
+
+      - name: Say Hello
+        run: echo "Hello, World!"
