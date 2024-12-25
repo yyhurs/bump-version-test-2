@@ -2,6 +2,8 @@ name: Check package.json Version
 
 on:
   pull_request:
+    branches:
+      - main
     types:
       - synchronize
       - opened
