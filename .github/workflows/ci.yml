@@ -12,6 +12,7 @@ on:
 jobs:
   check-package-version:
     runs-on: ubuntu-latest
+    continue-on-error: true
     steps:
       # 1. 檢查 PR 分支的代碼，確保完整的 Git 紀錄
       - name: Checkout PR branch
@@ -21,7 +22,7 @@ jobs:
 
       # 3. 檢查 package.json 是否被修改
       - name: Check package.json version
-        continue-on-error: true
+        # continue-on-error: true
         run: |
           # 確保 package.json 被修改
           if ! git diff --name-only origin/main...HEAD | grep -q "package.json"; then
@@ -41,5 +42,12 @@ jobs:
 
           echo "✅ package.json 檢查通過：版本號從 $MAIN_VERSION 升級到 $CURRENT_VERSION"
 
-      - name: Say Hello
-        run: echo "Hello, World!"
+      - name: Say Hello to next step
+        run: echo "Hello, Next Step!"
+
+  say-hello-to-next-job:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - name: Say Hello to next job step
+        run: echo "Hello, Next job step!"
